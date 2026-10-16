@@ -85,7 +85,7 @@ class OfficialImporter
                     continue;
                 }
 
-                if (implode('', array_map(fn ($v) => trim((string) $v), $cells)) === '') {
+                if (implode('', array_map(fn ($v) => $this->text($v), $cells)) === '') {
                     continue;
                 }
 
@@ -125,7 +125,7 @@ class OfficialImporter
         }
         $byNorm += self::ALIASES;
         foreach ($cells as $i => $v) {
-            $n = self::norm((string) $v);
+            $n = self::norm($this->text($v));
             if (isset($byNorm[$n])) {
                 $map[$i] = $byNorm[$n];
             }
@@ -242,12 +242,28 @@ class OfficialImporter
     /** Ngày giữ nguyên dạng chuỗi dd/mm/yyyy như dữ liệu cũ. */
     private function dateText(mixed $v): string
     {
+        $v = $this->excelSerialToDate($v) ?? $v;
+
         return $v instanceof DateTimeInterface ? $v->format('d/m/Y') : $this->text($v);
+    }
+
+    /**
+     * Ô ngày trong Excel đôi khi được đọc ra dạng số (ví dụ 31715 = 30/10/1986). Chỉ đổi số 5 chữ số
+     * (khoảng 1927–2064) để không nhầm với năm 4 chữ số như 1986.
+     */
+    private function excelSerialToDate(mixed $v): ?\DateTimeImmutable
+    {
+        if ((is_int($v) || is_float($v) || (is_string($v) && ctype_digit(trim($v)))) && (float) $v >= 10000 && (float) $v <= 60000) {
+            return (new \DateTimeImmutable('1899-12-30'))->modify('+'.(int) $v.' days');
+        }
+
+        return null;
     }
 
     /** @return array{d:int,m:int,y:int}|null */
     private function parseDate(mixed $v): ?array
     {
+        $v = $this->excelSerialToDate($v) ?? $v;
         if ($v instanceof DateTimeInterface) {
             return ['d' => (int) $v->format('j'), 'm' => (int) $v->format('n'), 'y' => (int) $v->format('Y')];
         }
