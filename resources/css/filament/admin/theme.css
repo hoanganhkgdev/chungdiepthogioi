@@ -1,0 +1,316 @@
+@import '../../../../vendor/filament/filament/resources/css/theme.css';
+
+@source '../../../../app/Filament/**/*';
+@source '../../../../resources/views/filament/**/*';
+
+/* ---------- Màn hình đăng nhập ---------- */
+.fi-simple-layout {
+    background:
+        radial-gradient(900px 500px at 10% -10%, rgb(0 148 68 / .16), transparent 60%),
+        radial-gradient(800px 500px at 110% 110%, rgb(0 148 68 / .14), transparent 60%),
+        #f4f8f5;
+}
+
+:is(.dark) .fi-simple-layout {
+    background: #0b1210;
+}
+
+.fi-simple-layout .fi-simple-main {
+    border-radius: 1.25rem;
+    border-top: 4px solid #009444;
+    box-shadow: 0 20px 50px -20px rgb(0 80 40 / .35), 0 2px 6px rgb(0 0 0 / .04);
+}
+
+.fi-simple-layout .fi-logo {
+    height: 6rem !important;
+    width: auto;
+    margin-bottom: 0.5rem;
+}
+
+.fi-simple-layout .fi-simple-header-heading {
+    font-weight: 700;
+    color: #006b32;
+}
+
+:is(.dark) .fi-simple-layout .fi-simple-header-heading {
+    color: #4ade80;
+}
+
+.fi-simple-layout .fi-btn {
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+/* ---------- Captcha ---------- */
+.captcha-box {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.captcha-box img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 0.5rem;
+    border: 1px solid rgb(0 148 68 / .3);
+}
+
+.captcha-refresh {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.8125rem;
+    color: #006b32;
+    cursor: pointer;
+}
+
+.captcha-refresh:hover {
+    text-decoration: underline;
+}
+
+/* ---------- Khung admin ---------- */
+.fi-body {
+    background: #f6f8f7;
+}
+
+:is(.dark) .fi-body {
+    background: #0b1210;
+}
+
+.fi-topbar {
+    backdrop-filter: saturate(1.4) blur(8px);
+}
+
+/* Thẻ, bảng, widget */
+.fi-section,
+.fi-ta-ctn,
+.fi-wi-stats-overview-stat,
+.fi-wi-table .fi-ta-ctn {
+    border-radius: 0.875rem;
+    box-shadow: 0 1px 2px rgb(16 24 20 / .04), 0 4px 14px -6px rgb(16 24 20 / .08);
+}
+
+.fi-wi-stats-overview-stat {
+    border-top: 3px solid #009444;
+}
+
+.fi-wi-stats-overview-stat-value {
+    letter-spacing: -0.02em;
+}
+
+.fi-ta-header-cell {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #4b5d54;
+}
+
+.fi-ta-row:hover {
+    background: rgb(0 148 68 / .04);
+}
+
+.fi-header-heading {
+    letter-spacing: -0.02em;
+    font-weight: 700;
+}
+
+/* Menu bên trái */
+.fi-sidebar-item-btn {
+    border-radius: 0.625rem;
+}
+
+.fi-sidebar-item.fi-active .fi-sidebar-item-btn {
+    background: rgb(0 148 68 / .1);
+}
+
+.fi-sidebar-item.fi-active .fi-sidebar-item-label,
+.fi-sidebar-item.fi-active .fi-icon {
+    color: #006b32;
+}
+
+/* Nút chính */
+.fi-btn.fi-color-primary:not(.fi-outlined) {
+    --bg: #009444;
+    --text: #fff;
+    --hover-bg: #007a39;
+    --hover-text: #fff;
+    box-shadow: 0 1px 2px rgb(0 80 40 / .25);
+}
+
+.fi-btn.fi-color-success:not(.fi-outlined) {
+    --bg: #0f766e;
+    --text: #fff;
+    --hover-bg: #115e59;
+    --hover-text: #fff;
+}
+
+/* ---------- Sidebar ---------- */
+.fi-sidebar {
+    background: linear-gradient(180deg, #0a4a2a 0%, #073a21 55%, #052a18 100%);
+    border-right: 0;
+    box-shadow: 4px 0 24px -12px rgb(0 40 20 / .5);
+}
+
+.fi-sidebar-header-ctn,
+.fi-sidebar-header {
+    background: transparent;
+    box-shadow: none;
+    border-bottom: 1px solid rgb(255 255 255 / .08);
+}
+
+.fi-sidebar-header-ctn {
+    height: auto !important;
+}
+
+.fi-sidebar-header {
+    height: auto !important;
+    min-height: 0;
+    padding: 0.75rem !important;
+    margin: 0 !important;
+}
+
+.fi-sidebar-header-logo-ctn {
+    flex: 1 1 auto;
+    min-width: 0;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.fi-sidebar-header-logo-ctn a {
+    display: block;
+}
+
+.fi-sidebar-header .fi-logo {
+    flex-shrink: 0;
+    display: block;
+    box-sizing: border-box;
+    margin: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    padding: 0.875rem;
+    border-radius: 0.75rem;
+    background: #fff;
+    box-shadow: 0 2px 10px rgb(0 0 0 / .18);
+}
+
+.fi-sidebar-nav {
+    padding-top: 1rem;
+}
+
+.fi-sidebar-group-label {
+    color: rgb(255 255 255 / .45);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.fi-sidebar-group-btn .fi-icon {
+    color: rgb(255 255 255 / .45);
+}
+
+.fi-sidebar-item-btn {
+    border-radius: 0.625rem;
+    padding-block: 0.55rem;
+    transition: background-color 0.15s ease;
+}
+
+.fi-sidebar-item-btn .fi-icon,
+.fi-sidebar-item-label {
+    color: rgb(255 255 255 / .78);
+}
+
+.fi-sidebar-item-btn:hover {
+    background: rgb(255 255 255 / .08);
+}
+
+.fi-sidebar-item.fi-active .fi-sidebar-item-btn {
+    background: rgb(255 255 255 / .14);
+    box-shadow: inset 3px 0 0 #4ade80;
+}
+
+.fi-sidebar-item.fi-active .fi-sidebar-item-label,
+.fi-sidebar-item.fi-active .fi-icon {
+    color: #fff;
+}
+
+.fi-sidebar-item.fi-active .fi-sidebar-item-label {
+    font-weight: 600;
+}
+
+/* Chân sidebar: thẻ người dùng */
+.fi-sidebar-footer {
+    margin: 0.75rem;
+    padding: 0.5rem;
+    border-radius: 0.875rem;
+    background: rgb(255 255 255 / .07);
+    border: 1px solid rgb(255 255 255 / .08);
+}
+
+.fi-sidebar-footer .fi-user-menu-trigger {
+    color: #fff;
+}
+
+/* Nút thu/mở sidebar */
+.fi-sidebar-close-collapse-sidebar-btn,
+.fi-sidebar-open-collapse-sidebar-btn,
+.fi-sidebar-close-sidebar-btn {
+    color: rgb(255 255 255 / .7);
+}
+
+/* Ô tìm kiếm trong sidebar */
+.fi-sidebar .fi-global-search-field .fi-input-wrp {
+    background: rgb(255 255 255 / .1);
+    box-shadow: none;
+    --tw-ring-color: rgb(255 255 255 / .12);
+}
+
+.fi-sidebar .fi-global-search-field input {
+    color: #fff;
+}
+
+.fi-sidebar .fi-global-search-field input::placeholder,
+.fi-sidebar .fi-global-search-field .fi-icon {
+    color: rgb(255 255 255 / .55);
+}
+
+.fi-sidebar .fi-avatar {
+    background: #1fa059;
+    color: #fff;
+}
+
+/* ---------- Cột số chứng điệp (trang Giới đàn) ---------- */
+.part-count {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 11rem;
+}
+
+.part-count-n {
+    min-width: 3.25rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: #006b32;
+}
+
+.part-count-n.is-zero {
+    font-weight: 400;
+    color: #9ca3af;
+}
+
+.part-count-bar {
+    flex: 1;
+    height: 0.5rem;
+    border-radius: 9999px;
+    background: rgb(0 148 68 / .1);
+    overflow: hidden;
+}
+
+.part-count-bar i {
+    display: block;
+    height: 100%;
+    border-radius: 9999px;
+    background: linear-gradient(90deg, #4bbb79, #009444);
+}

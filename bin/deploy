@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# Chạy Ở LOCAL: đẩy code lên GitHub rồi bảo server cập nhật.
+#   bin/deploy            deploy nhánh main
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+SSH_KEY="${DEPLOY_SSH_KEY:-$HOME/.ssh/id_ed25519_onehost}"
+SSH_TARGET="stqvakdvhosting@onehost-cloudhn032505.000nethost.com"
+SSH_PORT=65333
+APP_DIR="domains/chungdiepthogioi.ghpgvn.vn"
+
+[ "$(git rev-parse --abbrev-ref HEAD)" = "main" ] || { echo "Chỉ deploy từ nhánh main."; exit 1; }
+[ -z "$(git status --porcelain)" ] || { echo "Còn thay đổi chưa commit. Hãy commit trước."; git status --short; exit 1; }
+
+echo "==> Build giao diện (public/build được commit để server không cần Node)"
+npm run build >/dev/null
+if [ -n "$(git status --porcelain public/build)" ]; then
+    echo "public/build vừa thay đổi. Hãy commit rồi chạy lại:"; git status --short public/build; exit 1
+fi
+
+echo "==> Push lên GitHub"
+git push origin main
+
+echo "==> Cập nhật server"
+ssh -i "$SSH_KEY" -p "$SSH_PORT" "$SSH_TARGET" "cd $APP_DIR && bash deploy.sh"
+echo "==> Hoàn tất: https://chungdiepthogioi.ghpgvn.vn"
