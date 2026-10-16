@@ -56,3 +56,19 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+## Quy trình làm việc & triển khai
+
+Local (máy bạn) → GitHub (`hoanganhkgdev/chungdiepthogioi`, nhánh `main`) → Server (OnePanel, `~/domains/chungdiepthogioi.ghpgvn.vn`).
+
+1. Sửa code trên local, thử tại https://chungdiepthogioi.test (Herd).
+2. Commit vào nhánh `main`.
+3. Chạy `bin/deploy`. Script sẽ: build giao diện (`npm run build`), push lên GitHub, rồi SSH vào server chạy `deploy.sh`
+   (git pull, `composer install --no-dev`, `migrate`, Filament assets, cache config/view).
+
+Lưu ý:
+- Nếu `public/build` thay đổi sau khi build, `bin/deploy` dừng lại: hãy commit rồi chạy lại (server không có Node).
+- Không đưa lên git: `.env`, `vendor/`, `public/uploads` (ảnh chân dung), `public/assets`, file `.sql`, thư mục `chungdiepthogioi_nukeviet/`.
+  Trên server các thư mục này nằm sẵn và `git reset --hard` không chạm vào chúng.
+- Server dùng PHP CLI 8.4 tại `/opt/alt/php84/usr/bin/php` (CLI mặc định của host là 8.1).
+- Quay lại bản trước: trên server `git reset --hard <mã commit cũ> && bash deploy.sh` (script sẽ fetch lại, nên dùng `git revert` ở local rồi `bin/deploy` an toàn hơn).
