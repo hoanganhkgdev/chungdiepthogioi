@@ -62,8 +62,47 @@ class Official extends Model
         return isset(self::$dupMemo[$memoKey][mb_strtolower(trim((string) $o->chungdiepso)).'|'.$o->part_id]);
     }
 
+    /**
+     * Mã số giới tử ngẫu nhiên, cùng dạng với mã cũ (11 chữ số, bắt đầu bằng 0), bảo đảm chưa có bản ghi nào dùng.
+     */
+    public static function generateMasothe(): string
+    {
+        $table = (new static)->getTable();
+
+        do {
+            $code = '0'.str_pad((string) random_int(0, 9_999_999_999), 10, '0', STR_PAD_LEFT);
+        } while (DB::table($table)->where('masothe', $code)->exists());
+
+        return $code;
+    }
+
+    /** Dòng của trang hiện tại có chung Mã số giới tử với bản ghi khác không? (một truy vấn nhỏ, có index) */
+    public static function isDuplicateCode(self $o, iterable $pageRecords): bool
+    {
+        static $memo = [];
+        $records = collect($pageRecords);
+        $key = md5($records->pluck('id')->implode(','));
+
+        if (! isset($memo[$key])) {
+            $codes = $records->pluck('masothe')->map(fn ($c) => trim((string) $c))->filter(fn ($c) => $c !== '' && $c !== '0')->unique()->values();
+            $memo = [$key => $codes->isEmpty() ? [] : DB::table((new static)->getTable())
+                ->select('masothe')->whereIn('masothe', $codes)->groupBy('masothe')->havingRaw('count(*) > 1')
+                ->pluck('masothe')->map(fn ($c) => mb_strtolower(trim($c)))->flip()->all()];
+        }
+
+        return isset($memo[$key][mb_strtolower(trim((string) $o->masothe))]);
+    }
+
     protected static function booted(): void
     {
+        // Để trống Mã số giới tử (nhập tay hoặc import) thì tự tạo mã mới không trùng
+        static::saving(function (self $o) {
+            $code = trim((string) $o->masothe);
+            if ($code === '' || $code === '0') {
+                $o->masothe = static::generateMasothe();
+            }
+        });
+
         static::saved(fn () => Cache::forget(self::TAB_COUNTS_KEY));
         static::deleted(fn () => Cache::forget(self::TAB_COUNTS_KEY));
 

@@ -97,7 +97,20 @@ class OfficialResource extends Resource
                             TextInput::make('ngayxuatgia')->label('Ngày xuất gia')->placeholder('dd/mm/yyyy')->maxLength(50),
                             TextInput::make('noixuatgia')->label('Nơi xuất gia')->maxLength(255),
                             TextInput::make('diachi')->label('Nơi thường trú')->maxLength(255),
-                            TextInput::make('masothe')->label('Mã số giới tử')->maxLength(255),
+                            TextInput::make('masothe')->label('Mã số giới tử')->maxLength(255)
+                                ->placeholder('Để trống: hệ thống tự tạo')
+                                ->live(onBlur: true)
+                                ->helperText(function ($state, ?Official $record) {
+                                    $state = trim((string) $state);
+                                    if ($state === '') {
+                                        return 'Để trống thì hệ thống tự tạo mã mới không trùng khi lưu.';
+                                    }
+                                    $dup = Official::where('masothe', $state)->when($record, fn ($q) => $q->where('id', '!=', $record->id))->first();
+
+                                    return $dup ? new HtmlString('<span style="color:#b45309">⚠ Mã này đã có ở chứng điệp #'.$dup->id.' ('.e(trim($dup->ho.' '.$dup->ten)).'). Mỗi người nên có một mã riêng.</span>') : null;
+                                })
+                                ->suffixAction(Action::make('generateCode')->icon('heroicon-o-sparkles')->tooltip('Tạo mã ngẫu nhiên')
+                                    ->action(fn (\Filament\Schemas\Components\Utilities\Set $set) => $set('masothe', Official::generateMasothe()))),
                         ]),
                         Tab::make('Thọ giới & giới đàn')->icon('heroicon-o-building-library')->columns(2)->schema([
                             TextInput::make('thogioi')->label('Thọ giới')->maxLength(255)
@@ -174,6 +187,7 @@ class OfficialResource extends Resource
                         $o->status ? null : 'Đang ẩn',
                         $o->image ? null : 'Thiếu ảnh',
                         Official::isDuplicate($o, $livewire->getTableRecords()) ? 'Trùng số' : null,
+                        Official::isDuplicateCode($o, $livewire->getTableRecords()) ? 'Trùng mã' : null,
                     ]))),
                 TextColumn::make('addtime')->label('Nhập lúc')->sortable()->color('gray')
                     ->state(fn (Official $o) => $o->addtime ? Carbon::createFromTimestamp($o->addtime)->locale('vi')->diffForHumans() : '—'),

@@ -64,13 +64,13 @@ class OfficialImporter
         }
     }
 
-    /** @return array{created:int, updated:int, skipped:int, errors:string[]} */
+    /** @return array{created:int, updated:int, skipped:int, duplicates:int, errors:string[]} */
     public function import(string $path, string $ext): array
     {
         $reader = strtolower($ext) === 'csv' ? new CsvReader() : new XlsxReader();
         $reader->open($path);
 
-        $result = ['created' => 0, 'updated' => 0, 'skipped' => 0, 'errors' => []];
+        $result = ['created' => 0, 'updated' => 0, 'skipped' => 0, 'duplicates' => 0, 'errors' => []];
         $map = null;
 
         foreach ($reader->getSheetIterator() as $sheet) {
@@ -170,17 +170,50 @@ class OfficialImporter
             [$data['ngay_cap'], $data['thang_cap'], $data['nam_cap']] = [$cap['d'], $cap['m'], $cap['y']];
         }
 
-        $existing = ($this->update && $data['chungdiepso'] !== '')
-            ? Official::where('chungdiepso', $data['chungdiepso'])->first() : null;
+        // Không bao giờ tạo bản ghi lặp: dòng đã có thì cập nhật hoặc bỏ qua tùy lựa chọn
+        $existing = $this->findExisting($data);
 
         if ($existing) {
-            // Không ghi đè bằng ô trống
-            $existing->update(array_filter($data, fn ($v) => $v !== '' && $v !== null));
-            $result['updated']++;
-        } else {
-            Official::create($data + ['status' => 1]);
-            $result['created']++;
+            if ($this->update) {
+                // Không ghi đè bằng ô trống
+                $existing->update(array_filter($data, fn ($v) => $v !== '' && $v !== null));
+                $result['updated']++;
+            } else {
+                $result['duplicates']++;
+            }
+
+            return;
         }
+
+        Official::create($data + ['status' => 1]);
+        $result['created']++;
+    }
+
+    /**
+     * Tìm bản ghi của đúng người này: trùng Mã số giới tử (và cùng người), hoặc trùng Chứng điệp số trong cùng giới đàn.
+     * Mã số giới tử đã thuộc về NGƯỜI KHÁC (mã ngẫu nhiên từng bị trùng) thì báo lỗi thay vì ghi đè nhầm.
+     */
+    private function findExisting(array $data): ?Official
+    {
+        $name = self::norm($data['ho'].$data['ten']);
+        $isSamePerson = fn (Official $o) => (int) $o->part_id === (int) $data['part_id']
+            && (($data['chungdiepso'] !== '' && $o->chungdiepso === $data['chungdiepso']) || self::norm($o->ho.$o->ten) === $name);
+
+        if ($data['masothe'] !== '') {
+            $sameCode = Official::where('masothe', $data['masothe'])->get();
+            if ($sameCode->isNotEmpty()) {
+                $match = $sameCode->first($isSamePerson);
+                if ($match) {
+                    return $match;
+                }
+                $other = $sameCode->first();
+                throw new \RuntimeException('Mã số giới tử '.$data['masothe'].' đã thuộc về chứng điệp #'.$other->id.' ('.trim($other->ho.' '.$other->ten).')');
+            }
+        }
+
+        return $data['chungdiepso'] !== ''
+            ? Official::where('chungdiepso', $data['chungdiepso'])->where('part_id', $data['part_id'])->first()
+            : null;
     }
 
     private function resolvePart(string $value): ?int
