@@ -16,7 +16,6 @@ class OfficialImporter
 {
     /** Tiêu đề cột dùng cho file mẫu, theo thứ tự của file nhập cũ. */
     public const COLUMNS = [
-        'masothe' => 'Mã số giới tử',
         'hoten' => 'Họ và tên',
         'phapdanh' => 'Pháp danh',
         'namsinh' => 'Năm sinh',
@@ -42,14 +41,13 @@ class OfficialImporter
         'chungdiepso' => 'Chứng điệp số',
         'image' => 'Hình mặt trước',
         'ngaycap' => 'Ngày cấp',
-        'prior' => 'Ưu tiên',
     ];
 
     /** Tên cột khác được chấp nhận (đã chuẩn hóa) -> field. */
     private const ALIASES = [
-        'masogioitu' => 'masothe', 'hovadem' => 'ho', 'ho' => 'ho', 'ten' => 'ten', 'hovaten' => 'hoten', 'noithuongtru' => 'diachi', 'giodan' => 'part',
+        'masogioitu' => 'masothe', 'masothe' => 'masothe', 'hovadem' => 'ho', 'ho' => 'ho', 'ten' => 'ten', 'hovaten' => 'hoten', 'noithuongtru' => 'diachi', 'giodan' => 'part',
         'giaodan' => 'part', 'hoathuongdandau' => 'htdandau', 'yetmaaxale' => 'yetma', 'giaothoaxale' => 'giaotho',
-        'hinhmattruoc' => 'image', 'uutien' => 'prior',
+        'hinhmattruoc' => 'image',
     ];
 
     private array $parts = [];
@@ -161,7 +159,7 @@ class OfficialImporter
             throw new \RuntimeException('không xác định được Giới đàn "'.$str('part').'"');
         }
 
-        $data = ['ho' => $ho, 'ten' => $ten, 'part_id' => $partId, 'prior' => $this->truthy($d['prior'] ?? null) ? 1 : 0];
+        $data = ['ho' => $ho, 'ten' => $ten, 'part_id' => $partId];
         foreach (['masothe', 'chungdiepso', 'phapdanh', 'namsinh', 'noisinh', 'ngayxuatgia', 'noixuatgia', 'diachi', 'thogioi',
             'tochucngay', 'diachigioidan', 'image', 'daigioidan', 'htdandau', 'yetma', 'giaotho', 'denhat', 'denhi',
             'detam', 'detu', 'dengu', 'deluc', 'dethat'] as $k) {
@@ -264,11 +262,6 @@ class OfficialImporter
         }
 
         return null;
-    }
-
-    private function truthy(mixed $v): bool
-    {
-        return in_array(Str::lower($this->text($v)), ['1', 'x', 'co', 'có', 'yes', 'true'], true);
     }
 
     private static function norm(string $s): string

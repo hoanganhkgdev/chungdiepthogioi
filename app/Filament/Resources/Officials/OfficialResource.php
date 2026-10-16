@@ -151,7 +151,6 @@ class OfficialResource extends Resource
                                 ->getUploadedFileNameForStorageUsing(fn ($file) => str($file->getClientOriginalName())
                                     ->beforeLast('.')->slug()->append('-'.time().'.'.$file->getClientOriginalExtension())->toString()),
                             Toggle::make('status')->label('Hiển thị')->default(true),
-                            Toggle::make('prior')->label('Ưu tiên'),
                         ]),
                     ])->columnSpan(['lg' => 1])->extraAttributes(['class' => 'lg:sticky lg:top-4 self-start']),
                 ]),
