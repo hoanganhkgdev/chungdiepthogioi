@@ -22,7 +22,7 @@ class CreateOfficial extends CreateRecord
 
         // /admin/officials/create?from={id}: nhập tiếp cùng đợt, sao chép thông tin giới đàn từ bản ghi gốc
         if ($source = Official::find((int) request()->query('from'))) {
-            $this->form->fill($source->only(self::BATCH_FIELDS) + ['status' => true, 'weight' => 0]);
+            $this->form->fill($source->only(self::BATCH_FIELDS) + ['status' => true]);
         }
     }
 
@@ -36,6 +36,6 @@ class CreateOfficial extends CreateRecord
 
     protected function preserveFormDataWhenCreatingAnother(array $data): array
     {
-        return array_intersect_key($data, array_flip(self::BATCH_FIELDS)) + ['status' => true, 'weight' => 0];
+        return array_intersect_key($data, array_flip(self::BATCH_FIELDS)) + ['status' => true];
     }
 }

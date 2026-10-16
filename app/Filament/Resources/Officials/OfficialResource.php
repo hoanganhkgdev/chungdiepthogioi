@@ -152,7 +152,6 @@ class OfficialResource extends Resource
                                     ->beforeLast('.')->slug()->append('-'.time().'.'.$file->getClientOriginalExtension())->toString()),
                             Toggle::make('status')->label('Hiển thị')->default(true),
                             Toggle::make('prior')->label('Ưu tiên'),
-                            TextInput::make('weight')->label('Thứ tự')->numeric()->default(0),
                         ]),
                     ])->columnSpan(['lg' => 1])->extraAttributes(['class' => 'lg:sticky lg:top-4 self-start']),
                 ]),
