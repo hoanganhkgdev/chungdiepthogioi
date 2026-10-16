@@ -97,9 +97,6 @@ class ListOfficials extends ListRecords
                 ->modifyQueryUsing(fn (Builder $query) => $query->where('nv4_vi_official_rows.status', 0)),
             'noimage' => Tab::make('Thiếu ảnh')->badge($c['noimage'])->badgeColor('warning')
                 ->modifyQueryUsing(fn (Builder $query) => $query->where('nv4_vi_official_rows.image', '')),
-            // Phép gom nhóm nặng chỉ chạy khi mở đúng tab này
-            'dup' => Tab::make('Trùng số')->badge($c['dup'])->badgeColor('warning')
-                ->modifyQueryUsing(fn (Builder $query) => $query->withDup()->whereNotNull('dups.c')),
         ];
     }
 }

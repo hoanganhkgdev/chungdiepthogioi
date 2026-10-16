@@ -77,19 +77,7 @@ class OfficialResource extends Resource
                     Tabs::make('Chứng điệp')->columnSpan(['lg' => 2])->persistTabInQueryString()->tabs([
                         Tab::make('Thông tin cá nhân')->icon('heroicon-o-user')->columns(2)->schema([
                             TextInput::make('phapdanh')->label('Pháp danh')->required()->maxLength(50),
-                            TextInput::make('chungdiepso')->label('Chứng điệp số')->required()->maxLength(255)
-                                ->live(onBlur: true)
-                                ->helperText(function ($state, $get, ?Official $record) {
-                                    if (blank($state)) {
-                                        return null;
-                                    }
-                                    $dup = Official::where('chungdiepso', $state)
-                                        ->when($get('part_id'), fn ($q, $part) => $q->where('part_id', $part))
-                                        ->when($record, fn ($q) => $q->where('id', '!=', $record->id))
-                                        ->first();
-
-                                    return $dup ? new HtmlString('<span style="color:#b45309">⚠ Số này đã có ở chứng điệp #'.$dup->id.' ('.e(trim($dup->ho.' '.$dup->ten)).') cùng giới đàn. Vẫn lưu được nếu đúng ý.</span>') : null;
-                                }),
+                            TextInput::make('chungdiepso')->label('Chứng điệp số')->required()->maxLength(255),
                             // Trường ảo: lưu xuống hai cột ho/ten của bảng cũ khi bấm Lưu (xem CreateOfficial/EditOfficial)
                             TextInput::make('hoten')->label('Họ và tên')->required()->maxLength(255)->columnSpanFull()
                                 ->afterStateHydrated(function (TextInput $component, ?Official $record) {
@@ -189,7 +177,6 @@ class OfficialResource extends Resource
                     ->state(fn (Official $o, $livewire) => array_values(array_filter([
                         $o->status ? null : 'Đang ẩn',
                         $o->image ? null : 'Thiếu ảnh',
-                        Official::isDuplicate($o, $livewire->getTableRecords()) ? 'Trùng số' : null,
                         Official::isDuplicateCode($o, $livewire->getTableRecords()) ? 'Trùng mã' : null,
                     ]))),
                 TextColumn::make('addtime')->label('Nhập lúc')->sortable()->color('gray')

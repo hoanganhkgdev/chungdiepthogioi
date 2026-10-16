@@ -21,45 +21,14 @@ class Official extends Model
     /** Số đếm các tab ở trang danh sách, cache ngắn và tự xóa khi dữ liệu đổi. */
     public const TAB_COUNTS_KEY = 'official.tab-counts';
 
-    /** @return array{all:int,hidden:int,noimage:int,dup:int} */
+    /** @return array{all:int,hidden:int,noimage:int} */
     public static function tabCounts(): array
     {
         return Cache::remember(self::TAB_COUNTS_KEY, 600, fn () => [
             'all' => static::count(),
             'hidden' => static::where('status', 0)->count(),
             'noimage' => static::where('image', '')->count(),
-            'dup' => static::withDup()->whereNotNull('dups.c')->count(),
         ]);
-    }
-
-    /** @var array<string,array<string,bool>> */
-    private static array $dupMemo = [];
-
-    /**
-     * Có bản ghi khác cùng Chứng điệp số và cùng Giới đàn không? Chỉ kiểm tra các dòng của trang hiện tại
-     * (một truy vấn nhỏ) thay vì gom nhóm cả bảng ở mỗi lần mở trang.
-     */
-    public static function isDuplicate(self $o, iterable $pageRecords): bool
-    {
-        $records = collect($pageRecords);
-        $memoKey = md5($records->pluck('id')->implode(','));
-
-        if (! isset(self::$dupMemo[$memoKey])) {
-            $numbers = $records->pluck('chungdiepso')->map(fn ($n) => trim((string) $n))->filter()->unique()->values();
-            $map = [];
-            if ($numbers->isNotEmpty()) {
-                DB::table((new static)->getTable())
-                    ->selectRaw('chungdiepso, part_id, count(*) as c')
-                    ->whereIn('chungdiepso', $numbers)
-                    ->groupBy('chungdiepso', 'part_id')->havingRaw('count(*) > 1')->get()
-                    ->each(function ($r) use (&$map) {
-                        $map[mb_strtolower(trim($r->chungdiepso)).'|'.$r->part_id] = true;
-                    });
-            }
-            self::$dupMemo = [$memoKey => $map];
-        }
-
-        return isset(self::$dupMemo[$memoKey][mb_strtolower(trim((string) $o->chungdiepso)).'|'.$o->part_id]);
     }
 
     /** Tách "Họ và tên" thành [họ và đệm, tên]: tên là từ cuối cùng (quy ước tên người Việt). */
@@ -151,20 +120,6 @@ class Official extends Model
     public function part(): BelongsTo
     {
         return $this->belongsTo(OfficialPart::class, 'part_id');
-    }
-
-    /**
-     * Thêm cột is_dup: bản ghi có cùng Chứng điệp số VÀ cùng Giới đàn với bản ghi khác.
-     * Gom nhóm một lần rồi join, tránh tự join O(n²) trên bảng MyISAM không có index chungdiepso.
-     */
-    public function scopeWithDup(Builder $q): Builder
-    {
-        $t = $this->getTable();
-        $dups = DB::table($t)->selectRaw('chungdiepso, part_id, count(*) as c')
-            ->where('chungdiepso', '<>', '')->groupBy('chungdiepso', 'part_id')->havingRaw('count(*) > 1');
-
-        return $q->select("$t.*")->selectRaw('dups.c is not null as is_dup')
-            ->leftJoinSub($dups, 'dups', fn ($j) => $j->on("$t.chungdiepso", '=', 'dups.chungdiepso')->on("$t.part_id", '=', 'dups.part_id'));
     }
 
     public function scopeActive(Builder $q): Builder

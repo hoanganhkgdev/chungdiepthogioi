@@ -56,7 +56,6 @@ class LatestOfficials extends TableWidget
                     ->state(fn (Official $o, $livewire) => array_values(array_filter([
                         $o->status ? null : 'Đang ẩn',
                         $o->image ? null : 'Thiếu ảnh',
-                        Official::isDuplicate($o, $livewire->getTableRecords()) ? 'Trùng số' : null,
                     ]))),
                 TextColumn::make('addtime')->label('Nhập lúc')
                     ->state(fn (Official $o) => $o->addtime ? Carbon::createFromTimestamp($o->addtime)->locale('vi')->diffForHumans() : '—')
