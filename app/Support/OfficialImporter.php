@@ -39,7 +39,6 @@ class OfficialImporter
         'deluc' => 'Đệ lục',
         'dethat' => 'Đệ thất',
         'chungdiepso' => 'Chứng điệp số',
-        'image' => 'Hình mặt trước',
         'ngaycap' => 'Ngày cấp',
     ];
 
@@ -47,7 +46,6 @@ class OfficialImporter
     private const ALIASES = [
         'masogioitu' => 'masothe', 'masothe' => 'masothe', 'hovadem' => 'ho', 'ho' => 'ho', 'ten' => 'ten', 'hovaten' => 'hoten', 'noithuongtru' => 'diachi', 'giodan' => 'part',
         'giaodan' => 'part', 'hoathuongdandau' => 'htdandau', 'yetmaaxale' => 'yetma', 'giaothoaxale' => 'giaotho',
-        'hinhmattruoc' => 'image',
     ];
 
     private array $parts = [];
@@ -161,7 +159,7 @@ class OfficialImporter
 
         $data = ['ho' => $ho, 'ten' => $ten, 'part_id' => $partId];
         foreach (['masothe', 'chungdiepso', 'phapdanh', 'namsinh', 'noisinh', 'ngayxuatgia', 'noixuatgia', 'diachi', 'thogioi',
-            'tochucngay', 'diachigioidan', 'image', 'daigioidan', 'htdandau', 'yetma', 'giaotho', 'denhat', 'denhi',
+            'tochucngay', 'diachigioidan', 'daigioidan', 'htdandau', 'yetma', 'giaotho', 'denhat', 'denhi',
             'detam', 'detu', 'dengu', 'deluc', 'dethat'] as $k) {
             $data[$k] = in_array($k, ['namsinh', 'ngayxuatgia']) ? $this->dateText($d[$k] ?? null) : $str($k);
         }
