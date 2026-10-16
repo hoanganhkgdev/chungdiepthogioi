@@ -45,7 +45,7 @@ class ListOfficials extends ListRecords
                 ->color('success')
                 ->visible(fn () => auth()->user()->canEdit())
                 ->modalHeading('Import chứng điệp từ Excel')
-                ->modalDescription('Cột được nhận theo tên tiêu đề (không phụ thuộc thứ tự). Bắt buộc có cột "Tên"; "Họ và đệm" nên có. Dùng "Tải file mẫu" để lấy đúng tiêu đề.')
+                ->modalDescription('Cột được nhận theo tên tiêu đề (không phụ thuộc thứ tự). Bắt buộc có cột "Họ và tên" (file cũ có hai cột "Họ và đệm" và "Tên" vẫn dùng được). Dùng "Tải file mẫu" để lấy đúng tiêu đề.')
                 ->modalSubmitActionLabel('Import')
                 ->schema([
                     FileUpload::make('file')->label('File .xlsx hoặc .csv')->required()

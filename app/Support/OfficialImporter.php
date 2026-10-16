@@ -17,8 +17,7 @@ class OfficialImporter
     /** Tiêu đề cột dùng cho file mẫu, theo thứ tự của file nhập cũ. */
     public const COLUMNS = [
         'masothe' => 'Mã số giới tử',
-        'ho' => 'Họ và đệm',
-        'ten' => 'Tên',
+        'hoten' => 'Họ và tên',
         'phapdanh' => 'Pháp danh',
         'namsinh' => 'Năm sinh',
         'noisinh' => 'Nơi sinh',
@@ -48,7 +47,7 @@ class OfficialImporter
 
     /** Tên cột khác được chấp nhận (đã chuẩn hóa) -> field. */
     private const ALIASES = [
-        'masogioitu' => 'masothe', 'hovadem' => 'ho', 'noithuongtru' => 'diachi', 'giodan' => 'part',
+        'masogioitu' => 'masothe', 'hovadem' => 'ho', 'ho' => 'ho', 'ten' => 'ten', 'hovaten' => 'hoten', 'noithuongtru' => 'diachi', 'giodan' => 'part',
         'giaodan' => 'part', 'hoathuongdandau' => 'htdandau', 'yetmaaxale' => 'yetma', 'giaothoaxale' => 'giaotho',
         'hinhmattruoc' => 'image', 'uutien' => 'prior',
     ];
@@ -81,7 +80,7 @@ class OfficialImporter
 
                 if ($map === null) {
                     $map = $this->headerMap($cells);
-                    if (! in_array('ten', $map, true)) {
+                    if (array_intersect(['ten', 'hoten'], $map) === []) {
                         $map = null; // chưa gặp dòng tiêu đề, thử dòng tiếp theo
 
                         continue;
@@ -106,7 +105,7 @@ class OfficialImporter
         $reader->close();
 
         if ($map === null) {
-            $result['errors'][] = 'Không tìm thấy dòng tiêu đề (cần có cột "Tên"). Hãy tải file mẫu.';
+            $result['errors'][] = 'Không tìm thấy dòng tiêu đề (cần có cột "Họ và tên"). Hãy tải file mẫu.';
         }
 
         return $result;
@@ -149,8 +148,12 @@ class OfficialImporter
         $str = fn ($k) => $this->text($d[$k] ?? null);
         $ho = $str('ho');
         $ten = $str('ten');
+        // Cột "Họ và tên" (một cột) được ưu tiên; vẫn nhận file cũ có hai cột "Họ và đệm" + "Tên"
+        if (($full = $str('hoten')) !== '') {
+            [$ho, $ten] = Official::splitFullName($full);
+        }
         if ($ten === '') {
-            throw new \RuntimeException('thiếu Tên');
+            throw new \RuntimeException('thiếu Họ và tên');
         }
 
         $partId = $this->resolvePart($str('part'));

@@ -26,6 +26,14 @@ class CreateOfficial extends CreateRecord
         }
     }
 
+    protected function mutateFormDataBeforeCreate(array $data): array
+    {
+        [$data['ho'], $data['ten']] = Official::splitFullName((string) ($data['hoten'] ?? ''));
+        unset($data['hoten']);
+
+        return $data;
+    }
+
     protected function preserveFormDataWhenCreatingAnother(array $data): array
     {
         return array_intersect_key($data, array_flip(self::BATCH_FIELDS)) + ['status' => true, 'weight' => 0];

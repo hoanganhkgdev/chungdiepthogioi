@@ -90,8 +90,13 @@ class OfficialResource extends Resource
 
                                     return $dup ? new HtmlString('<span style="color:#b45309">⚠ Số này đã có ở chứng điệp #'.$dup->id.' ('.e(trim($dup->ho.' '.$dup->ten)).') cùng giới đàn. Vẫn lưu được nếu đúng ý.</span>') : null;
                                 }),
-                            TextInput::make('ho')->label('Họ và đệm')->required()->maxLength(255),
-                            TextInput::make('ten')->label('Tên')->required()->maxLength(255),
+                            // Trường ảo: lưu xuống hai cột ho/ten của bảng cũ khi bấm Lưu (xem CreateOfficial/EditOfficial)
+                            TextInput::make('hoten')->label('Họ và tên')->required()->maxLength(255)->columnSpanFull()
+                                ->afterStateHydrated(function (TextInput $component, ?Official $record) {
+                                    if ($record) {
+                                        $component->state($record->fullname);
+                                    }
+                                }),
                             TextInput::make('namsinh')->label('Năm sinh')->placeholder('dd/mm/yyyy')->maxLength(50),
                             TextInput::make('noisinh')->label('Nơi sinh')->maxLength(255),
                             TextInput::make('ngayxuatgia')->label('Ngày xuất gia')->placeholder('dd/mm/yyyy')->maxLength(50),

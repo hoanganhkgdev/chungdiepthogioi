@@ -62,6 +62,24 @@ class Official extends Model
         return isset(self::$dupMemo[$memoKey][mb_strtolower(trim((string) $o->chungdiepso)).'|'.$o->part_id]);
     }
 
+    /** Tách "Họ và tên" thành [họ và đệm, tên]: tên là từ cuối cùng (quy ước tên người Việt). */
+    public static function splitFullName(string $full): array
+    {
+        $words = preg_split('/\s+/u', trim($full), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        if ($words === []) {
+            return ['', ''];
+        }
+        $ten = array_pop($words);
+
+        return [implode(' ', $words), $ten];
+    }
+
+    /** Họ và tên đã chuẩn hóa khoảng trắng, dùng để hiển thị và so sánh. */
+    public static function joinFullName(?string $ho, ?string $ten): string
+    {
+        return trim((string) preg_replace('/\s+/u', ' ', trim((string) $ho).' '.trim((string) $ten)));
+    }
+
     /**
      * Mã số giới tử ngẫu nhiên, cùng dạng với mã cũ (11 chữ số, bắt đầu bằng 0), bảo đảm chưa có bản ghi nào dùng.
      */
@@ -156,7 +174,7 @@ class Official extends Model
 
     public function getFullnameAttribute(): string
     {
-        return $this->ho . ' ' . $this->ten;
+        return static::joinFullName($this->ho, $this->ten);
     }
 
     public function slug(): string
