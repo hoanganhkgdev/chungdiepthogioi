@@ -60,7 +60,7 @@ class OfficialResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()->withDup()->with('part');
+        return parent::getEloquentQuery()->with('part');
     }
 
     public static function getGlobalSearchEloquentQuery(): Builder
@@ -170,10 +170,10 @@ class OfficialResource extends Resource
                         default => 'gray',
                     }),
                 TextColumn::make('notes')->label('Cần chú ý')->badge()->color('warning')
-                    ->state(fn (Official $o) => array_values(array_filter([
+                    ->state(fn (Official $o, $livewire) => array_values(array_filter([
                         $o->status ? null : 'Đang ẩn',
                         $o->image ? null : 'Thiếu ảnh',
-                        $o->is_dup ? 'Trùng số' : null,
+                        Official::isDuplicate($o, $livewire->getTableRecords()) ? 'Trùng số' : null,
                     ]))),
                 TextColumn::make('addtime')->label('Nhập lúc')->sortable()->color('gray')
                     ->state(fn (Official $o) => $o->addtime ? Carbon::createFromTimestamp($o->addtime)->locale('vi')->diffForHumans() : '—'),
@@ -183,7 +183,7 @@ class OfficialResource extends Resource
                 SelectFilter::make('part_id')->label('Giới đàn')->relationship('part', 'title')->searchable()->preload(),
                 SelectFilter::make('thogioi')->label('Thọ giới')->options(array_combine(self::THO_GIOI, self::THO_GIOI)),
                 SelectFilter::make('nam_cap')->label('Năm cấp')
-                    ->options(fn () => Official::where('nam_cap', '>', 0)->distinct()->orderByDesc('nam_cap')->pluck('nam_cap', 'nam_cap')->all()),
+                    ->options(fn () => \Illuminate\Support\Facades\Cache::remember('official.nam-cap', 3600, fn () => Official::where('nam_cap', '>', 0)->distinct()->orderByDesc('nam_cap')->pluck('nam_cap', 'nam_cap')->all())),
             ], layout: FiltersLayout::AboveContent)
             ->filtersFormColumns(3)
             ->deferFilters(false)

@@ -7,6 +7,7 @@ use App\Support\Alias;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class Official extends Model
@@ -17,8 +18,55 @@ class Official extends Model
     public $timestamps = false;
     protected $guarded = [];
 
+    /** Số đếm các tab ở trang danh sách, cache ngắn và tự xóa khi dữ liệu đổi. */
+    public const TAB_COUNTS_KEY = 'official.tab-counts';
+
+    /** @return array{all:int,hidden:int,noimage:int,dup:int} */
+    public static function tabCounts(): array
+    {
+        return Cache::remember(self::TAB_COUNTS_KEY, 600, fn () => [
+            'all' => static::count(),
+            'hidden' => static::where('status', 0)->count(),
+            'noimage' => static::where('image', '')->count(),
+            'dup' => static::withDup()->whereNotNull('dups.c')->count(),
+        ]);
+    }
+
+    /** @var array<string,array<string,bool>> */
+    private static array $dupMemo = [];
+
+    /**
+     * Có bản ghi khác cùng Chứng điệp số và cùng Giới đàn không? Chỉ kiểm tra các dòng của trang hiện tại
+     * (một truy vấn nhỏ) thay vì gom nhóm cả bảng ở mỗi lần mở trang.
+     */
+    public static function isDuplicate(self $o, iterable $pageRecords): bool
+    {
+        $records = collect($pageRecords);
+        $memoKey = md5($records->pluck('id')->implode(','));
+
+        if (! isset(self::$dupMemo[$memoKey])) {
+            $numbers = $records->pluck('chungdiepso')->map(fn ($n) => trim((string) $n))->filter()->unique()->values();
+            $map = [];
+            if ($numbers->isNotEmpty()) {
+                DB::table((new static)->getTable())
+                    ->selectRaw('chungdiepso, part_id, count(*) as c')
+                    ->whereIn('chungdiepso', $numbers)
+                    ->groupBy('chungdiepso', 'part_id')->havingRaw('count(*) > 1')->get()
+                    ->each(function ($r) use (&$map) {
+                        $map[mb_strtolower(trim($r->chungdiepso)).'|'.$r->part_id] = true;
+                    });
+            }
+            self::$dupMemo = [$memoKey => $map];
+        }
+
+        return isset(self::$dupMemo[$memoKey][mb_strtolower(trim((string) $o->chungdiepso)).'|'.$o->part_id]);
+    }
+
     protected static function booted(): void
     {
+        static::saved(fn () => Cache::forget(self::TAB_COUNTS_KEY));
+        static::deleted(fn () => Cache::forget(self::TAB_COUNTS_KEY));
+
         static::saving(function (self $o) {
             $now = time();
             if (! $o->exists && empty($o->addtime)) {

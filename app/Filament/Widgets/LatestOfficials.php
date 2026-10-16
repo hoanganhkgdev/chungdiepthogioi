@@ -27,7 +27,7 @@ class LatestOfficials extends TableWidget
         $t = (new Official)->getTable();
 
         return $table
-            ->query(fn () => Official::query()->withDup()->with('part')->orderByDesc("$t.id"))
+            ->query(fn () => Official::query()->with('part')->orderByDesc("$t.id"))
             ->paginated([8, 15, 30])
             ->defaultPaginationPageOption(8)
             ->columns([
@@ -53,10 +53,10 @@ class LatestOfficials extends TableWidget
                         default => 'gray',
                     }),
                 TextColumn::make('notes')->label('Cần chú ý')->badge()->color('warning')
-                    ->state(fn (Official $o) => array_values(array_filter([
+                    ->state(fn (Official $o, $livewire) => array_values(array_filter([
                         $o->status ? null : 'Đang ẩn',
                         $o->image ? null : 'Thiếu ảnh',
-                        $o->is_dup ? 'Trùng số' : null,
+                        Official::isDuplicate($o, $livewire->getTableRecords()) ? 'Trùng số' : null,
                     ]))),
                 TextColumn::make('addtime')->label('Nhập lúc')
                     ->state(fn (Official $o) => $o->addtime ? Carbon::createFromTimestamp($o->addtime)->locale('vi')->diffForHumans() : '—')

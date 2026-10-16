@@ -89,14 +89,17 @@ class ListOfficials extends ListRecords
 
     public function getTabs(): array
     {
+        $c = Official::tabCounts();
+
         return [
-            'all' => Tab::make('Tất cả')->badge(Official::count()),
-            'hidden' => Tab::make('Đang ẩn')->badge(Official::where('status', 0)->count())->badgeColor('gray')
+            'all' => Tab::make('Tất cả')->badge($c['all']),
+            'hidden' => Tab::make('Đang ẩn')->badge($c['hidden'])->badgeColor('gray')
                 ->modifyQueryUsing(fn (Builder $query) => $query->where('nv4_vi_official_rows.status', 0)),
-            'noimage' => Tab::make('Thiếu ảnh')->badge(Official::where('image', '')->count())->badgeColor('warning')
+            'noimage' => Tab::make('Thiếu ảnh')->badge($c['noimage'])->badgeColor('warning')
                 ->modifyQueryUsing(fn (Builder $query) => $query->where('nv4_vi_official_rows.image', '')),
-            'dup' => Tab::make('Trùng số')->badge(Official::withDup()->whereNotNull('dups.c')->count())->badgeColor('warning')
-                ->modifyQueryUsing(fn (Builder $query) => $query->whereNotNull('dups.c')),
+            // Phép gom nhóm nặng chỉ chạy khi mở đúng tab này
+            'dup' => Tab::make('Trùng số')->badge($c['dup'])->badgeColor('warning')
+                ->modifyQueryUsing(fn (Builder $query) => $query->withDup()->whereNotNull('dups.c')),
         ];
     }
 }
