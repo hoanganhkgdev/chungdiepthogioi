@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Officials\Pages;
 
 use App\Filament\Resources\Officials\OfficialResource;
 use App\Support\OfficialImporter;
+use App\Support\PhotoStore;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Forms\Components\FileUpload;
@@ -39,13 +40,52 @@ class ListOfficials extends ListRecords
 
                     return response()->download($path, 'mau-import-chung-diep.xlsx')->deleteFileAfterSend();
                 }),
+            Action::make('bulkPhotos')
+                ->label('Tải ảnh hàng loạt')
+                ->icon('heroicon-o-photo')
+                ->color('gray')
+                ->visible(fn () => auth()->user()->canEdit())
+                ->modalHeading('Tải ảnh chân dung hàng loạt')
+                ->modalDescription('Chọn nhiều ảnh cùng lúc (tối đa 200 ảnh, mỗi ảnh tối đa 8 MB). Tên file ảnh phải trùng với tên đã điền ở cột "Ảnh chân dung" (không phân biệt hoa thường và dấu). Ảnh lớn tự thu nhỏ còn tối đa 1500px.')
+                ->modalSubmitActionLabel('Tải lên')
+                ->schema([
+                    FileUpload::make('photos')->label('Ảnh chân dung')->required()
+                        ->multiple()->maxFiles(200)->maxSize(8192)
+                        ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
+                        ->storeFiles(false)->panelLayout('grid'),
+                    Toggle::make('overwrite')->label('Ghi đè nếu đã có file cùng tên')
+                        ->helperText('Tắt: ảnh trùng tên với file đã có sẽ được bỏ qua, ảnh cũ giữ nguyên.'),
+                ])
+                ->action(function (array $data) {
+                    $r = (new PhotoStore((bool) ($data['overwrite'] ?? false)))->store($data['photos'] ?? []);
+
+                    $body = 'Đã lưu: '.count($r['saved']).' · Gắn vào chứng điệp: '.$r['linked']
+                        .' · Bỏ qua: '.count($r['skipped']).' · Lỗi: '.count($r['errors']);
+                    if ($r['unmatched']) {
+                        $body .= '<br><b>Chưa có chứng điệp nào ghi tên file này:</b> '.e(implode(', ', array_slice($r['unmatched'], 0, 15)))
+                            .(count($r['unmatched']) > 15 ? ' …' : '');
+                    }
+                    if ($r['skipped']) {
+                        $body .= '<br>Bỏ qua: '.e(implode('; ', array_map(fn ($x) => $x[0].' ('.$x[1].')', array_slice($r['skipped'], 0, 5)))).(count($r['skipped']) > 5 ? ' …' : '');
+                    }
+                    if ($r['errors']) {
+                        $body .= '<br>'.e(implode(' | ', array_slice($r['errors'], 0, 8)));
+                    }
+
+                    Notification::make()
+                        ->title('Tải ảnh xong')
+                        ->body(new \Illuminate\Support\HtmlString($body))
+                        ->status($r['errors'] || $r['unmatched'] ? 'warning' : 'success')
+                        ->persistent()
+                        ->send();
+                }),
             Action::make('import')
                 ->label('Import Excel')
                 ->icon('heroicon-o-arrow-up-tray')
                 ->color('success')
                 ->visible(fn () => auth()->user()->canEdit())
                 ->modalHeading('Import chứng điệp từ Excel')
-                ->modalDescription('Cột được nhận theo tên tiêu đề (không phụ thuộc thứ tự). Bắt buộc có cột "Họ và tên" (file cũ có hai cột "Họ và đệm" và "Tên" vẫn dùng được). Dùng "Tải file mẫu" để lấy đúng tiêu đề.')
+                ->modalDescription('Cột được nhận theo tên tiêu đề (không phụ thuộc thứ tự). Bắt buộc có cột "Họ và tên" (file cũ có hai cột "Họ và đệm" và "Tên" vẫn dùng được). Cột "Ảnh chân dung" chỉ điền tên file (ví dụ thich-minh-tru.jpg), sau đó dùng nút "Tải ảnh hàng loạt" để đưa ảnh lên. Dùng "Tải file mẫu" để lấy đúng tiêu đề.')
                 ->modalSubmitActionLabel('Import')
                 ->schema([
                     FileUpload::make('file')->label('File .xlsx hoặc .csv')->required()

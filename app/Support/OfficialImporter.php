@@ -38,13 +38,14 @@ class OfficialImporter
         'dengu' => 'Đệ ngũ',
         'deluc' => 'Đệ lục',
         'dethat' => 'Đệ thất',
+        'image' => 'Ảnh chân dung',
         'chungdiepso' => 'Chứng điệp số',
         'ngaycap' => 'Ngày cấp',
     ];
 
     /** Tên cột khác được chấp nhận (đã chuẩn hóa) -> field. */
     private const ALIASES = [
-        'masogioitu' => 'masothe', 'masothe' => 'masothe', 'hovadem' => 'ho', 'ho' => 'ho', 'ten' => 'ten', 'hovaten' => 'hoten', 'noithuongtru' => 'diachi', 'giodan' => 'part',
+        'masogioitu' => 'masothe', 'hinhmattruoc' => 'image', 'masothe' => 'masothe', 'hovadem' => 'ho', 'ho' => 'ho', 'ten' => 'ten', 'hovaten' => 'hoten', 'noithuongtru' => 'diachi', 'giodan' => 'part',
         'giaodan' => 'part', 'hoathuongdandau' => 'htdandau', 'yetmaaxale' => 'yetma', 'giaothoaxale' => 'giaotho',
     ];
 
@@ -159,9 +160,12 @@ class OfficialImporter
 
         $data = ['ho' => $ho, 'ten' => $ten, 'part_id' => $partId];
         foreach (['masothe', 'chungdiepso', 'phapdanh', 'namsinh', 'noisinh', 'ngayxuatgia', 'noixuatgia', 'diachi', 'thogioi',
-            'tochucngay', 'diachigioidan', 'daigioidan', 'htdandau', 'yetma', 'giaotho', 'denhat', 'denhi',
+            'tochucngay', 'diachigioidan', 'image', 'daigioidan', 'htdandau', 'yetma', 'giaotho', 'denhat', 'denhi',
             'detam', 'detu', 'dengu', 'deluc', 'dethat'] as $k) {
             $data[$k] = in_array($k, ['namsinh', 'ngayxuatgia']) ? $this->dateText($d[$k] ?? null) : $str($k);
+            if ($k === 'image') {
+                $data[$k] = basename(str_replace('\\', '/', $data[$k]));   // chỉ lấy tên file
+            }
         }
 
         $cap = $this->parseDate($d['ngaycap'] ?? null);
