@@ -35,3 +35,6 @@ Thumbs.db
 /public/assets
 *.sql
 *.sql.gz
+*.xlsx
+*.xls
+*.csv
