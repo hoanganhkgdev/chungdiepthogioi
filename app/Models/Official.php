@@ -50,17 +50,64 @@ class Official extends Model
     }
 
     /**
-     * Mã số giới tử ngẫu nhiên, cùng dạng với mã cũ (11 chữ số, bắt đầu bằng 0), bảo đảm chưa có bản ghi nào dùng.
+     * Mã số giới tử = mã tỉnh (3 số) + 2 nếu Tỳ Kheo/Sa Di còn lại 3 + 2 số cuối năm đại giới đàn + 5 số ngẫu nhiên (10000-99999).
+     * Không có mã tỉnh thì dùng dạng cũ (0 + 10 số ngẫu nhiên), chỉ để dự phòng khi tạo bản ghi bằng code.
+     *
+     * @throws \InvalidArgumentException khi thiếu năm
      */
-    public static function generateMasothe(): string
+    public static function generateMasothe(?string $province = null, ?string $thogioi = null, ?string $tochucngay = null, ?int $namCap = null): string
     {
         $table = (new static)->getTable();
 
+        if ($province === null) {
+            do {
+                $code = '0'.str_pad((string) random_int(0, 9_999_999_999), 10, '0', STR_PAD_LEFT);
+            } while (DB::table($table)->where('masothe', $code)->exists());
+
+            return $code;
+        }
+
+        $norm = preg_replace('/[^a-z0-9]/', '', \Illuminate\Support\Str::lower(\Illuminate\Support\Str::ascii((string) $thogioi)));
+        $gender = in_array($norm, ['tykheo', 'sadi'], true) ? 2 : 3;
+
+        // Năm: số 4 chữ số cuối cùng trong "Tổ chức ngày" (ví dụ 30/03-03/04/2026); không có thì lấy năm cấp
+        $year = null;
+        if (preg_match_all('/\d{4}/', (string) $tochucngay, $m) && $m[0] !== []) {
+            $year = (int) end($m[0]);
+        } elseif ($namCap && $namCap > 1900) {
+            $year = $namCap;
+        }
+        if (! $year) {
+            throw new \InvalidArgumentException('Thiếu năm để tạo Mã số giới tử: cần "Tổ chức ngày" có ghi năm hoặc "Năm cấp".');
+        }
+        $prefix = $province.$gender.substr((string) $year, -2);
+
         do {
-            $code = '0'.str_pad((string) random_int(0, 9_999_999_999), 10, '0', STR_PAD_LEFT);
+            $code = $prefix.random_int(10000, 99999);
         } while (DB::table($table)->where('masothe', $code)->exists());
 
         return $code;
+    }
+
+    /**
+     * Sinh mã cho dữ liệu form khi để trống Mã số giới tử; ném ValidationException (hiện lỗi ngay ở ô tương ứng) nếu thiếu thông tin.
+     *
+     * @param  array<string,mixed>  $data
+     */
+    public static function codeFromFormData(array $data): string
+    {
+        $part = OfficialPart::find((int) ($data['part_id'] ?? 0));
+        if (blank($part?->province_code)) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['data.part_id' => $part
+                ? 'Giới đàn "'.$part->title.'" chưa có mã tỉnh: vào mục Giới đàn để chọn mã tỉnh, hoặc tự nhập Mã số giới tử.'
+                : 'Chọn Giới đàn để hệ thống tạo Mã số giới tử (hoặc tự nhập mã).']);
+        }
+
+        try {
+            return static::generateMasothe($part->province_code, $data['thogioi'] ?? null, $data['tochucngay'] ?? null, (int) ($data['nam_cap'] ?? 0));
+        } catch (\InvalidArgumentException $e) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['data.tochucngay' => $e->getMessage()]);
+        }
     }
 
     /** Dòng của trang hiện tại có chung Mã số giới tử với bản ghi khác không? (một truy vấn nhỏ, có index) */

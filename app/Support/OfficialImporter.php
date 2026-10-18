@@ -51,10 +51,18 @@ class OfficialImporter
 
     private array $parts = [];
 
+    /** @var array<int,?string> id giới đàn => mã tỉnh */
+    private array $partCodes = [];
+
+    /** @var array<int,string> */
+    private array $partTitles = [];
+
     public function __construct(private ?int $defaultPartId = null, private bool $update = false)
     {
         foreach (OfficialPart::all() as $p) {
             $this->parts['id:'.$p->id] = $p->id;
+            $this->partCodes[$p->id] = $p->province_code;
+            $this->partTitles[$p->id] = $p->title;
             $this->parts['t:'.self::norm($p->title)] = $p->id;
             $this->parts['t:'.self::norm($p->alias)] = $p->id;
         }
@@ -186,6 +194,19 @@ class OfficialImporter
             }
 
             return;
+        }
+
+        // Mã số giới tử để trống: tự tạo theo quy tắc (cần Mã tỉnh và năm đại giới đàn)
+        if ($data['masothe'] === '') {
+            $province = $this->partCodes[$data['part_id']] ?? null;
+            if (blank($province)) {
+                throw new \RuntimeException('giới đàn "'.($this->partTitles[$data['part_id']] ?? $data['part_id']).'" chưa có mã tỉnh để tạo Mã số giới tử (vào mục Giới đàn để chọn)');
+            }
+            try {
+                $data['masothe'] = Official::generateMasothe($province, $data['thogioi'], $data['tochucngay'], (int) ($data['nam_cap'] ?? 0));
+            } catch (\InvalidArgumentException $e) {
+                throw new \RuntimeException($e->getMessage());
+            }
         }
 
         Official::create($data + ['status' => 1]);

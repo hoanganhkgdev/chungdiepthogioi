@@ -96,14 +96,24 @@ class OfficialResource extends Resource
                                 ->helperText(function ($state, ?Official $record) {
                                     $state = trim((string) $state);
                                     if ($state === '') {
-                                        return 'Để trống thì hệ thống tự tạo mã mới không trùng khi lưu.';
+                                        return 'Để trống: khi lưu hệ thống tự tạo mã = mã tỉnh của giới đàn + 2/3 + năm + 5 số ngẫu nhiên.';
                                     }
                                     $dup = Official::where('masothe', $state)->when($record, fn ($q) => $q->where('id', '!=', $record->id))->first();
 
                                     return $dup ? new HtmlString('<span style="color:#b45309">⚠ Mã này đã có ở chứng điệp #'.$dup->id.' ('.e(trim($dup->ho.' '.$dup->ten)).'). Mỗi người nên có một mã riêng.</span>') : null;
                                 })
-                                ->suffixAction(Action::make('generateCode')->icon('heroicon-o-sparkles')->tooltip('Tạo mã ngẫu nhiên')
-                                    ->action(fn (\Filament\Schemas\Components\Utilities\Set $set) => $set('masothe', Official::generateMasothe()))),
+                                ->suffixAction(Action::make('generateCode')->icon('heroicon-o-sparkles')->tooltip('Tạo mã theo quy tắc')
+                                    ->action(function (\Filament\Schemas\Components\Utilities\Get $get, \Filament\Schemas\Components\Utilities\Set $set) {
+                                        try {
+                                            $province = \App\Models\OfficialPart::find($get('part_id'))?->province_code;
+                                            if (blank($province)) {
+                                                throw new \InvalidArgumentException('Hãy chọn Giới đàn (ở tab "Thọ giới & giới đàn") có mã tỉnh trước khi tạo mã.');
+                                            }
+                                            $set('masothe', Official::generateMasothe($province, $get('thogioi'), $get('tochucngay'), (int) $get('nam_cap')));
+                                        } catch (\InvalidArgumentException $e) {
+                                            \Filament\Notifications\Notification::make()->danger()->title($e->getMessage())->send();
+                                        }
+                                    })),
                         ]),
                         Tab::make('Thọ giới & giới đàn')->icon('heroicon-o-building-library')->columns(2)->schema([
                             TextInput::make('thogioi')->label('Thọ giới')->maxLength(255)

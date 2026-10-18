@@ -29,6 +29,10 @@ class EditOfficial extends EditRecord
         $full = Official::joinFullName($data['hoten'] ?? '', '');
         unset($data['hoten']);
 
+        if (blank(trim((string) ($data['masothe'] ?? '')))) {
+            $data['masothe'] = Official::codeFromFormData($data);
+        }
+
         $record = $this->getRecord();
         if ($full !== $record->fullname) {
             [$data['ho'], $data['ten']] = Official::splitFullName($full);

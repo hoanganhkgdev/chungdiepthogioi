@@ -85,7 +85,7 @@ class ListOfficials extends ListRecords
                 ->color('success')
                 ->visible(fn () => auth()->user()->canEdit())
                 ->modalHeading('Import chứng điệp từ Excel')
-                ->modalDescription('Cột được nhận theo tên tiêu đề (không phụ thuộc thứ tự). Bắt buộc có cột "Họ và tên" (file cũ có hai cột "Họ và đệm" và "Tên" vẫn dùng được). Cột "Ảnh chân dung" chỉ điền tên file (ví dụ thich-minh-tru.jpg), sau đó dùng nút "Tải ảnh hàng loạt" để đưa ảnh lên. Dùng "Tải file mẫu" để lấy đúng tiêu đề.')
+                ->modalDescription('Cột được nhận theo tên tiêu đề (không phụ thuộc thứ tự). Bắt buộc có cột "Họ và tên" (file cũ có hai cột "Họ và đệm" và "Tên" vẫn dùng được). Mã số giới tử được hệ thống tự tạo từ mã tỉnh của giới đàn. Cột "Ảnh chân dung" chỉ điền tên file (ví dụ thich-minh-tru.jpg), sau đó dùng nút "Tải ảnh hàng loạt" để đưa ảnh lên. Dùng "Tải file mẫu" để lấy đúng tiêu đề.')
                 ->modalSubmitActionLabel('Import')
                 ->schema([
                     FileUpload::make('file')->label('File .xlsx hoặc .csv')->required()

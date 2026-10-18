@@ -13,6 +13,7 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
@@ -68,6 +69,9 @@ class OfficialPartResource extends Resource
                         TextInput::make('title')->label('Tên giới đàn')->required()->maxLength(255),
                         TextInput::make('alias')->label('Alias (đường dẫn, tự sinh)')
                             ->visibleOn('edit')->disabled()->dehydrated(false),
+                        Select::make('province_code')->label('Mã tỉnh (như CCCD)')
+                            ->options(\App\Support\ProvinceCodes::options())->searchable()
+                            ->helperText('3 số đầu của Mã số giới tử các chứng điệp thuộc giới đàn này.'),
                         TextInput::make('note')->label('Ghi chú')->maxLength(255),
                         Toggle::make('status')->label('Hiển thị')->default(true),
                     ]),
@@ -95,6 +99,7 @@ class OfficialPartResource extends Resource
                 TextColumn::make('title')->label('Giới đàn')->weight('semibold')
                     ->description(fn (OfficialPart $p) => $p->alias)
                     ->searchable(['title', 'alias'])->sortable(),
+                TextColumn::make('province_code')->label('Mã tỉnh')->badge()->color('gray')->placeholder('Chưa có')->sortable(),
                 ViewColumn::make('officials_count')->label('Số chứng điệp')
                     ->view('filament.tables.count-bar')->viewData(['max' => $max()])->sortable(),
                 TextColumn::make('note')->label('Ghi chú')->toggleable(isToggledHiddenByDefault: true),

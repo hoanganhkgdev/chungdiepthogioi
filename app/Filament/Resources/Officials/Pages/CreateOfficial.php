@@ -31,6 +31,10 @@ class CreateOfficial extends CreateRecord
         [$data['ho'], $data['ten']] = Official::splitFullName((string) ($data['hoten'] ?? ''));
         unset($data['hoten']);
 
+        if (blank(trim((string) ($data['masothe'] ?? '')))) {
+            $data['masothe'] = Official::codeFromFormData($data);
+        }
+
         return $data;
     }
 
