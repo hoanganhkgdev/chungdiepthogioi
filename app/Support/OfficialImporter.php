@@ -45,13 +45,13 @@ class OfficialImporter
 
     /** Tên cột khác được chấp nhận (đã chuẩn hóa) -> field. */
     private const ALIASES = [
-        'masogioitu' => 'masothe', 'hinhmattruoc' => 'image', 'hinhmobile' => 'image', 'masothe' => 'masothe', 'hovadem' => 'ho', 'ho' => 'ho', 'ten' => 'ten', 'hovaten' => 'hoten', 'noithuongtru' => 'diachi', 'giodan' => 'part',
+        'masogioitu' => 'masothe', 'hinhmattruoc' => 'image', 'masothe' => 'masothe', 'hovadem' => 'ho', 'ho' => 'ho', 'ten' => 'ten', 'hovaten' => 'hoten', 'noithuongtru' => 'diachi', 'giodan' => 'part',
         'giaodan' => 'part', 'hoathuongdandau' => 'htdandau', 'yetmaaxale' => 'yetma', 'giaothoaxale' => 'giaotho',
     ];
 
     private array $parts = [];
 
-    public function __construct(private ?int $defaultPartId = null, private bool $update = false, private bool $dryRun = false)
+    public function __construct(private ?int $defaultPartId = null, private bool $update = false)
     {
         foreach (OfficialPart::all() as $p) {
             $this->parts['id:'.$p->id] = $p->id;
@@ -179,9 +179,7 @@ class OfficialImporter
         if ($existing) {
             if ($this->update) {
                 // Không ghi đè bằng ô trống
-                if (! $this->dryRun) {
-                    $existing->update(array_filter($data, fn ($v) => $v !== '' && $v !== null));
-                }
+                $existing->update(array_filter($data, fn ($v) => $v !== '' && $v !== null));
                 $result['updated']++;
             } else {
                 $result['duplicates']++;
@@ -190,9 +188,7 @@ class OfficialImporter
             return;
         }
 
-        if (! $this->dryRun) {
-            Official::create($data + ['status' => 1]);
-        }
+        Official::create($data + ['status' => 1]);
         $result['created']++;
     }
 
@@ -243,10 +239,8 @@ class OfficialImporter
         if (is_float($v) && floor($v) == $v) {
             $v = (int) $v;
         }
-        $v = trim((string) $v);
 
-        // Ô công thức Excel không có giá trị đã tính (đọc ra '=AB2&...' hoặc '=') thì coi như trống
-        return str_starts_with($v, '=') ? '' : $v;
+        return trim((string) $v);
     }
 
     /** Ngày giữ nguyên dạng chuỗi dd/mm/yyyy như dữ liệu cũ. */
