@@ -23,12 +23,12 @@ class PhotoStore
 
     /**
      * @param  iterable<object>  $files  đối tượng có getClientOriginalName() và getRealPath()
-     * @return array{saved:string[], skipped:array<int,array{0:string,1:string}>, errors:string[], linked:int, unmatched:string[]}
+     * @return array{saved:string[], existing:string[], skipped:array<int,array{0:string,1:string}>, errors:string[], linked:int, unmatched:string[]}
      */
     public function store(iterable $files): array
     {
         $disk = Storage::disk('official');
-        $report = ['saved' => [], 'skipped' => [], 'errors' => [], 'linked' => 0, 'unmatched' => []];
+        $report = ['saved' => [], 'existing' => [], 'skipped' => [], 'errors' => [], 'linked' => 0, 'unmatched' => []];
         $seen = [];
 
         foreach ($files as $file) {
@@ -49,6 +49,7 @@ class PhotoStore
 
             $exists = $disk->exists($name);
             if ($exists && ! $this->overwrite) {
+                $report['existing'][] = $name;
                 $report['skipped'][] = [$name, 'đã có file cùng tên (bật "Ghi đè" nếu muốn thay)'];
             } else {
                 try {

@@ -57,25 +57,45 @@ class ListOfficials extends ListRecords
                         ->helperText('Tắt: ảnh trùng tên với file đã có sẽ được bỏ qua, ảnh cũ giữ nguyên.'),
                 ])
                 ->action(function (array $data) {
-                    $r = (new PhotoStore((bool) ($data['overwrite'] ?? false)))->store($data['photos'] ?? []);
+                    $overwrite = (bool) ($data['overwrite'] ?? false);
+                    $r = (new PhotoStore($overwrite))->store($data['photos'] ?? []);
 
-                    $body = 'Đã lưu: '.count($r['saved']).' · Gắn vào chứng điệp: '.$r['linked']
-                        .' · Bỏ qua: '.count($r['skipped']).' · Lỗi: '.count($r['errors']);
-                    if ($r['unmatched']) {
-                        $body .= '<br><b>Chưa có chứng điệp nào ghi tên file này:</b> '.e(implode(', ', array_slice($r['unmatched'], 0, 15)))
-                            .(count($r['unmatched']) > 15 ? ' …' : '');
+                    $saved = count($r['saved']);
+                    $existing = count($r['existing']);
+                    $dupInBatch = count($r['skipped']) - $existing;
+                    $list = fn (array $items, int $max = 12) => e(implode(', ', array_slice($items, 0, $max))).(count($items) > $max ? ' …' : '');
+
+                    $lines = [];
+                    if ($saved > 0) {
+                        $lines[] = "✔ Đã lưu <b>$saved</b> ảnh".($overwrite ? ' (thay ảnh cũ nếu trùng tên)' : ' mới').'.';
                     }
-                    if ($r['skipped']) {
-                        $body .= '<br>Bỏ qua: '.e(implode('; ', array_map(fn ($x) => $x[0].' ('.$x[1].')', array_slice($r['skipped'], 0, 5)))).(count($r['skipped']) > 5 ? ' …' : '');
+                    if ($r['linked'] > 0) {
+                        $lines[] = "✔ Đã gắn ảnh vào <b>{$r['linked']}</b> chứng điệp.";
+                    }
+                    if ($existing > 0) {
+                        $lines[] = "ℹ <b>$existing</b> ảnh đã có sẵn trên hệ thống nên được giữ nguyên, không ghi đè."
+                            .' Muốn thay bằng ảnh vừa chọn: bật “Ghi đè nếu đã có file cùng tên” rồi tải lại.';
+                    }
+                    if ($dupInBatch > 0) {
+                        $lines[] = "⚠ $dupInBatch ảnh bị bỏ qua vì trùng tên với ảnh khác trong cùng lần tải.";
+                    }
+                    if ($r['unmatched']) {
+                        $lines[] = '⚠ <b>'.count($r['unmatched']).'</b> ảnh đã lưu nhưng chưa có chứng điệp nào ghi tên file này (kiểm tra lại cột “Ảnh chân dung”): '.$list($r['unmatched']);
                     }
                     if ($r['errors']) {
-                        $body .= '<br>'.e(implode(' | ', array_slice($r['errors'], 0, 8)));
+                        $lines[] = '✖ '.count($r['errors']).' ảnh bị lỗi: '.$list($r['errors'], 6);
                     }
 
+                    $title = match (true) {
+                        $saved === 0 && $existing > 0 && ! $r['errors'] => 'Các ảnh này đã có sẵn trên hệ thống',
+                        $saved === 0 && $r['errors'] !== [] => 'Không tải được ảnh',
+                        default => 'Tải ảnh xong',
+                    };
+
                     Notification::make()
-                        ->title('Tải ảnh xong')
-                        ->body(new \Illuminate\Support\HtmlString($body))
-                        ->status($r['errors'] || $r['unmatched'] ? 'warning' : 'success')
+                        ->title($title)
+                        ->body(new \Illuminate\Support\HtmlString(implode('<br>', $lines) ?: 'Không có ảnh nào được xử lý.'))
+                        ->status($r['errors'] || $r['unmatched'] ? 'warning' : ($saved === 0 && $existing > 0 ? 'info' : 'success'))
                         ->persistent()
                         ->send();
                 }),
