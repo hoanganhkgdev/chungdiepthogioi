@@ -179,6 +179,17 @@ class Official extends Model
         return static::joinFullName($this->ho, $this->ten);
     }
 
+    /**
+     * Hòa thượng ký chứng điệp: Tỳ Kheo và Tỳ Kheo Ni do HT. Thích Thiện Nhơn ký, các thọ giới còn lại do HT. Thích Thiện Pháp ký.
+     * So sánh bỏ dấu, hoa thường và khoảng trắng nên "TỲ KHEO", "Tỳ Kheo " đều được nhận.
+     */
+    public function signedByThienNhon(): bool
+    {
+        $n = preg_replace('/[^a-z0-9]/', '', \Illuminate\Support\Str::lower(\Illuminate\Support\Str::ascii((string) $this->thogioi)));
+
+        return in_array($n, ['tykheo', 'tykheoni'], true);
+    }
+
     public function slug(): string
     {
         return strtolower(Alias::make($this->ho . ' ' . $this->ten));

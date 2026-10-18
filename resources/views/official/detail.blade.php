@@ -97,8 +97,13 @@
 									<ul id="dong-moc"><img width="140" src="/uploads/con-dau.png"></ul>
 									<ul class="thong-tin-2">
 										<li class="capngay">Cấp ngày <span>{{ $o->ngay_cap }}</span> tháng <span>{{ $o->thang_cap }}</span> năm <span>{{ $o->nam_cap }}</span></li>
+										@if($o->signedByThienNhon())
+										<li class="banthuongtruc" id="banthuongtruc">TUN. BAN THƯỜNG TRỰC HĐTS GHPGVN </br> TRƯỞNG BAN TĂNG SỰ TƯ</li>
+										<li class="ht" id="ht">Hòa thượng THÍCH THIỆN NHƠN</li>
+										@else
 										<li class="banthuongtruc" id="banthuongtruc">TUN. BAN THƯỜNG TRỰC HĐTS GHPGVN </br> P. TRƯỞNG BAN TT BAN TĂNG SỰ TƯ</li>
 										<li class="ht" id="ht">Hòa thượng THÍCH THIỆN PHÁP</li>
+										@endif
 									</ul>
 								</ul>
 							</div>
@@ -448,11 +453,8 @@
 <script>$(function () { window.print(); });</script>
 @endif
 <script>
-// Giữ nguyên hành vi trang công khai của bản NukeViet cũ (detail-1.tpl): do điều kiện `== "a" || "b"`
-// luôn đúng nên mọi chứng điệp đều hiển thị ký tên Hòa thượng THÍCH THIỆN NHƠN.
-document.getElementById("banthuongtruc").innerHTML = "TUN. BAN THƯỜNG TRỰC HĐTS GHPGVN </br> TRƯỞNG BAN TĂNG SỰ TƯ";
-document.getElementById("ht").innerHTML = "Hoà thượng THÍCH THIỆN NHƠN";
-$('#ht-thien-nhon').show();
-$('#ht-thien-phap').hide();
+// Hòa thượng ký (tên và chức danh đã được dựng sẵn ở trên theo thọ giới): Tỳ Kheo, Tỳ Kheo Ni -> Thích Thiện Nhơn; còn lại -> Thích Thiện Pháp.
+$('#ht-thien-nhon').toggle({{ $o->signedByThienNhon() ? 'true' : 'false' }});
+$('#ht-thien-phap').toggle({{ $o->signedByThienNhon() ? 'false' : 'true' }});
 </script>
 @endpush
